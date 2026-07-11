@@ -2,6 +2,10 @@
 
 Raspberry Pi Pico (RP2040) firmware for a LoRa slave node. The device receives RF commands from a master, reads sensor data, controls a relay, and responds with sensor readings over LoRa.
 
+## Target Board
+
+This project is designed for the **宅老大 Pico LoRa** development board, which integrates a Raspberry Pi Pico (RP2040) with an SX1262 LoRa module.
+
 ## Features
 
 - LoRa RF communication via SX1262 (915 MHz, SF7, BW 125 kHz)
