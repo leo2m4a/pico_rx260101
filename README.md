@@ -2,6 +2,8 @@
 
 Raspberry Pi Pico (RP2040) firmware for a LoRa slave node. The device receives RF commands from a master, reads sensor data, controls a relay, and responds with sensor readings over LoRa.
 
+> **This project is part of a master/slave pair and must be used together with the master node project [pico_mst_260219](https://github.com/leo2m4a/pico_mst_260219).**
+
 ## Target Board
 
 This project is designed for the **宅老大 Pico LoRa** development board, which integrates a Raspberry Pi Pico (RP2040) with an SX1262 LoRa module.
