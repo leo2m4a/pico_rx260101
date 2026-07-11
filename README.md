@@ -6,6 +6,7 @@ Raspberry Pi Pico (RP2040) firmware for a LoRa slave node. The device receives R
 
 This project is designed for the **宅老大 Pico LoRa** development board, which integrates a Raspberry Pi Pico (RP2040) with an SX1262 LoRa module.
 
+- [Purchase](https://www.makdev.net/p/store.html)
 - [Pinout](https://www.makdev.net/p/pico-lora-mesh-solar-shield-pinout.html)
 
 ## Features
