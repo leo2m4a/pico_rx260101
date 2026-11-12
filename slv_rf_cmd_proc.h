@@ -5,6 +5,7 @@ uint8_t slv_rf_cmd_proc(uint8_t *,uint8_t *,uint8_t *);
 uint8_t slv_compose_poll_rsp(uint8_t *);
 uint8_t slv_rf_action_wr_rly(uint8_t ,uint8_t );
 uint8_t slv_compose_rf_write_a4_rsp(uint8_t *);
+uint8_t slv_compose_rf_write_sch_rsp(uint8_t *,uint8_t ,const uint8_t *);
 
 extern uint8_t gVAR_RLY;
 extern uint8_t gVAR_IO;

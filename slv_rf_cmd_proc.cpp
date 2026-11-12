@@ -85,6 +85,9 @@ val_9 = *(inbuf+9);
         //make sure data length
         for(i=0;i<=7;i++)
         {gSCH_RLY[i] = *(inbuf+6+i);}
+
+        *(leng+0) = slv_compose_rf_write_sch_rsp(outbuf,addr,&gSCH_RLY[0]);
+        ret |= 0x1;
       }
       else if (addr == 0x11)
       {
@@ -92,6 +95,9 @@ val_9 = *(inbuf+9);
         //make sure data length
         for(i=0;i<=7;i++)
         {gSCH_RLY[i+8] = *(inbuf+6+i);}
+
+        *(leng+0) = slv_compose_rf_write_sch_rsp(outbuf,addr,&gSCH_RLY[8]);
+        ret |= 0x1;
       }
       else if (addr == 0x12)
       {
@@ -99,6 +105,9 @@ val_9 = *(inbuf+9);
         //make sure data length
         for(i=0;i<=7;i++)
         {gSCH_RLY[i+16] = *(inbuf+6+i);}
+
+        *(leng+0) = slv_compose_rf_write_sch_rsp(outbuf,addr,&gSCH_RLY[16]);
+        ret |= 0x1;
       }
 
     }
@@ -179,6 +188,27 @@ uint8_t slv_compose_rf_write_a4_rsp(uint8_t *rspbuf)
   *(rspbuf+15) = 4;
 //  for(i=11;i<16;i++)
 //  {*(rspbuf+i) = 0;}
-  
-  return ret;  
+
+  return ret;
+}
+
+// 排程寫入回應 (addr 0x10~0x12)：回傳剛寫入 gSCH_RLY 的 8 bytes 供 master 確認
+uint8_t slv_compose_rf_write_sch_rsp(uint8_t *rspbuf,uint8_t addr,const uint8_t *sch)
+{
+  int i;
+  uint8_t leng = 0x10;
+  uint8_t ret=0x10;
+
+  *(rspbuf+0) = RSP_SLVWR;
+  *(rspbuf+1) = leng;
+  *(rspbuf+2) = 0;
+  *(rspbuf+3) = PARAM_SID;
+  *(rspbuf+4) = SC_WRITE;
+  *(rspbuf+5) = addr;
+  for(i=0;i<8;i++)
+  {*(rspbuf+6+i) = *(sch+i);}
+  *(rspbuf+14) = 0;
+  *(rspbuf+15) = addr;
+
+  return ret;
 }
