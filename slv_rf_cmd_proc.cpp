@@ -174,7 +174,7 @@ uint8_t slv_compose_rf_write_a4_rsp(uint8_t *rspbuf)
                        //        master 目前沒檢查這個欄位，為相容先不改。
   *(rspbuf+2) = 0;
   *(rspbuf+3) = PARAM_SID;
-  *(rspbuf+4) = 0;
+  *(rspbuf+4) = SC_WRITE;
   *(rspbuf+5) = 0x4;
   *(rspbuf+6) = Ary_sensor.temp_h;
   *(rspbuf+7) = Ary_sensor.temp_l;
