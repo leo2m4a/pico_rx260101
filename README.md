@@ -44,11 +44,14 @@ This project requires **Pico SDK 2.2.0**. Follow the [official setup guide](http
 
 This project uses [RadioLib](https://github.com/jgromes/RadioLib) by Jan Gromeš, licensed under the MIT License.
 
-RadioLib is **not included** in this repository. Clone it into the project root before building:
+RadioLib is **not included** in this repository. Clone **version 7.8.1** into the project root before building:
 
 ```bash
-git clone https://github.com/jgromes/RadioLib.git
+git clone --branch 7.8.1 https://github.com/jgromes/RadioLib.git
 ```
+
+> **Use RadioLib 7.8.1.** RadioLib 8.0.0 replaced `SX1262::begin(freq, bw, sf, cr, syncWord, power)` with `begin(const ConfigLoRa_t&)`, so this project does not compile against 8.x.
+> If you already cloned the latest version: `cd RadioLib && git fetch --tags && git checkout 7.8.1`
 
 The directory structure should look like this:
 
