@@ -170,8 +170,7 @@ uint8_t slv_compose_rf_write_a4_rsp(uint8_t *rspbuf)
   uint8_t ret=0x10;
   
   *(rspbuf+0) = RSP_SLVWR;
-  *(rspbuf+1) = leng;  // [注意] leng = 0x10，但這包實際送出 20 bytes（回傳值 0x14）。
-                       //        master 目前沒檢查這個欄位，為相容先不改。
+  *(rspbuf+1) = leng;  // leng = 0x10，與實際送出長度 16 bytes（回傳值 0x10）一致。
   *(rspbuf+2) = 0;
   *(rspbuf+3) = PARAM_SID;
   *(rspbuf+4) = SC_WRITE;
