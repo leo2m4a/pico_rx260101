@@ -183,7 +183,7 @@ uint8_t slv_compose_rf_write_a4_rsp(uint8_t *rspbuf)
   *(rspbuf+12) = Ary_sensor.humi_l;
   *(rspbuf+13) = Ary_sensor.adc0_h;
   *(rspbuf+14) = Ary_sensor.adc0_l;  
-  *(rspbuf+15) = 4;
+  *(rspbuf+15) = 0xaa;
 //  for(i=11;i<16;i++)
 //  {*(rspbuf+i) = 0;}
 
