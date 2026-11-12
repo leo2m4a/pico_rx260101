@@ -76,20 +76,28 @@ val_9 = *(inbuf+9);
         
         ret |= 0x1;
       }
-      else if (addr = 0x10)
+      // [fix] 原本寫成 (addr = 0x10)：是賦值不是比較，條件永遠成立，
+      //       addr 不是 0/4 的寫入命令都會掉進這裡並覆寫 gSCH_RLY[0..7]，
+      //       0x11 / 0x12 分支永遠執行不到。下面三個分支都改成 ==。
+      else if (addr == 0x10)
       {
+        // 排程第 0 段：inbuf[6..13] → gSCH_RLY[0..7]
         //make sure data length
         for(i=0;i<=7;i++)
         {gSCH_RLY[i] = *(inbuf+6+i);}
       }
-      else if (addr = 0x11)
+      else if (addr == 0x11)
       {
+        // [注意] 這裡從 inbuf[14..21] 讀，不是 inbuf[6..13]。
+        //        若每個 addr 都是一包 12 bytes 的封包，資料應該在 inbuf+6，
+        //        請確認 master 端送法再決定要不要改成 *(inbuf+6+i)。
         //make sure data length
         for(i=0;i<=7;i++)
         {gSCH_RLY[i+8] = *(inbuf+6+8+i);}
       }
-      else if (addr = 0x12)
+      else if (addr == 0x12)
       {
+        // [注意] 同上，這裡讀 inbuf[22..29]（RX buffer 32 bytes，不會越界）。
         //make sure data length
         for(i=0;i<=7;i++)
         {gSCH_RLY[i+16] = *(inbuf+6+16+i);}
@@ -109,7 +117,8 @@ uint8_t slv_compose_poll_rsp(uint8_t *rspbuf)
   uint8_t ret=0x14;
   
   *(rspbuf+0) = RSP_ECHO;
-  *(rspbuf+1) = leng;
+  *(rspbuf+1) = leng;  // [注意] leng = 0x10，但這包實際送出 20 bytes（回傳值 0x14）。
+                       //        master 目前沒檢查這個欄位，為相容先不改。
   *(rspbuf+2) = 0;
   *(rspbuf+3) = PARAM_SID;
   *(rspbuf+4) = SC_PING;
@@ -154,7 +163,8 @@ uint8_t slv_compose_rf_write_a4_rsp(uint8_t *rspbuf)
   uint8_t ret=0x10;
   
   *(rspbuf+0) = RSP_SLVWR;
-  *(rspbuf+1) = leng;
+  *(rspbuf+1) = leng;  // [注意] leng = 0x10，但這包實際送出 20 bytes（回傳值 0x14）。
+                       //        master 目前沒檢查這個欄位，為相容先不改。
   *(rspbuf+2) = 0;
   *(rspbuf+3) = PARAM_SID;
   *(rspbuf+4) = 0;
