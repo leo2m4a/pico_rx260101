@@ -31,7 +31,9 @@
 //1.429 /1024
 #define _EN_ADC
 #define _EN_DS
-uint8_t rf_state = 0;
+// rf_state: 0 = 接收中, 1 = 發射中（transmit() 進行中）
+// [fix] 加 volatile：主迴圈寫、ISR 讀
+volatile uint8_t rf_state = 0;
 //ds
 OW ow;
 // 全域變數宣告
@@ -59,6 +61,8 @@ receivedFlag = true;
         }
         else
         {
+            // TxDone：只做標記。不要在 ISR 裡呼叫 radio->startReceive() 等 SPI 操作，
+            // transmit() 正在主迴圈裡輪詢 DIO1；切回 RX 由主迴圈在 transmit() 之後做。
             rf_state = 0;
         }
         
@@ -542,16 +546,18 @@ int main()
         #endif
         rf_state = 1;
           state = radio->transmit(&gPARAM_RFTX_buf[0], gPARAM_RFTX_leng);
+          // [fix] 送完立刻切回 RX（原本在 LCD 之後，LCD 寫入很慢，期間收不到）；
+          //       不論成功或失敗都把 rf_state 歸零。
+          rf_state = 0;
+          radio->startReceive();
           
           if (state == RADIOLIB_ERR_NONE) {
               printf("success!\n");
           } else {
               printf("failed, code %d\n", state);
-              rf_state = 0;
           }          
    lcd_set_cursor(1,8);
         lcd_hex((uint8_t)(gPARAM_fcnt_1s&0xff));
-          state = radio->startReceive(); 
         
       }
       else if((gPARAM_actflag & 0x80) == 0x80)      
