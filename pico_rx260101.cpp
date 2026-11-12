@@ -466,6 +466,10 @@ int main()
         // [fix] gPARAM_fcnt_1s / Ary_currentTime 也會在 timer ISR 裡被更新，
         //       主迴圈對時寫入時先關中斷，避免寫到一半被 ISR 進位蓋掉
         uint32_t irq_s = save_and_disable_interrupts();
+        // [fix #4] 100 ms 計數一起歸零：原本只設秒數，秒的邊界仍沿用本地舊相位，最多差 0.9 s。
+        //          master 在整秒時發 beacon，收到時就當成這一秒的開頭。
+        //          （仍有 beacon 空中時間 ~41 ms + 兩端主迴圈延遲 + 100 ms timer 相位的誤差）
+        gPARAM_fcnt_100ms = 0;
         gPARAM_fcnt_1s = Ary_receiveTime.sec;
         Ary_currentTime.sec = Ary_receiveTime.sec;
         Ary_currentTime.min = Ary_receiveTime.min;
