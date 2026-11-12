@@ -50,7 +50,7 @@ static inline void lcd_char(char val) {
     lcd_send_byte(val, LCD_CHARACTER);
 }
 
-void lcd_string(char *s) {
+void lcd_string(const char *s) {
     while (*s!='\0') {
         lcd_char(*s++);
     }
