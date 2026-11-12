@@ -88,19 +88,17 @@ val_9 = *(inbuf+9);
       }
       else if (addr == 0x11)
       {
-        // [注意] 這裡從 inbuf[14..21] 讀，不是 inbuf[6..13]。
-        //        若每個 addr 都是一包 12 bytes 的封包，資料應該在 inbuf+6，
-        //        請確認 master 端送法再決定要不要改成 *(inbuf+6+i)。
+        // 排程第 1 段：inbuf[6..13] → gSCH_RLY[8..15]
         //make sure data length
         for(i=0;i<=7;i++)
-        {gSCH_RLY[i+8] = *(inbuf+6+8+i);}
+        {gSCH_RLY[i+8] = *(inbuf+6+i);}
       }
       else if (addr == 0x12)
       {
-        // [注意] 同上，這裡讀 inbuf[22..29]（RX buffer 32 bytes，不會越界）。
+        // 排程第 2 段：inbuf[6..13] → gSCH_RLY[16..23]
         //make sure data length
         for(i=0;i<=7;i++)
-        {gSCH_RLY[i+16] = *(inbuf+6+16+i);}
+        {gSCH_RLY[i+16] = *(inbuf+6+i);}
       }
 
     }
