@@ -79,6 +79,23 @@ The device operates as a slave node (SID `0x84`). It listens for 12-byte LoRa pa
 
 The full UART/RF packet format is documented in [`docs/pico_lora_cmd2604091.ods`](docs/pico_lora_cmd2604091.ods) (LibreOffice Calc spreadsheet).
 
+### Write commands (`0x78`, subcmd `0x11`)
+
+The slave only acts on a write whose SID (byte 3) matches its own. Byte 5 selects the target:
+
+| Addr (byte 5) | Request data | Effect | Reply |
+|---|---|---|---|
+| `0x04` | Byte 6 write-enable mask, byte 7 value | Sets the relay bits selected by the mask | 16 bytes: `0x89`, `0x10`, …, `0x11`, `0x04`, sensor data in bytes 6–14, `0xaa` |
+| `0x10` | Bytes 6–13 | Stores `gSCH_RLY[0..7]` | 16 bytes, see below |
+| `0x11` | Bytes 6–13 | Stores `gSCH_RLY[8..15]` | 16 bytes, see below |
+| `0x12` | Bytes 6–13 | Stores `gSCH_RLY[16..23]` | 16 bytes, see below |
+
+The schedule write reply sends back the stored bytes so the master can check them: `0x89`, `0x10`, `0x00`, SID, `0x11`, addr, the 8 stored bytes in bytes 6–13, `0x00`, addr.
+
+### Poll reply
+
+The poll reply is 20 bytes, with length byte `0x14`: temperature, relay and IO state, ADC, humidity and DS18B20 readings, followed by three `0xaa` bytes.
+
 ## License
 
 Project source code is provided as-is. RadioLib is copyright Jan Gromeš and contributors, used under the [MIT License](https://github.com/jgromes/RadioLib/blob/master/LICENSE).
