@@ -92,6 +92,27 @@ The slave only acts on a write whose SID (byte 3) matches its own. Byte 5 select
 
 The schedule write reply sends back the stored bytes so the master can check them: `0x89`, `0x10`, `0x00`, SID, `0x11`, addr, the 8 stored bytes in bytes 6–13, `0x00`, addr.
 
+### Schedule storage (master EEPROM)
+
+The slave keeps `gSCH_RLY` in RAM only, so schedules written with addr `0x10`–`0x12` are lost on reset. Schedules are stored on the master's AT24C32 EEPROM (I2C `0x57`, 32-byte pages). See [pico_mst_260219](https://github.com/leo2m4a/pico_mst_260219) and the **EEPROM** sheet in the packet format spreadsheet.
+
+| Address | Contents |
+|---|---|
+| `0x0000` | Reserved for system info |
+| `0x0080` | Default relay schedules, 96 bytes (`24 × 4`), loaded by the master at startup |
+| `0x0100 + 0x20·n` | Relay n record (relays 0–3), one 32-byte page each |
+
+Relay record layout:
+
+| Offset | Size | Contents |
+|---|---|---|
+| `+0x00` | 16 | Schedule bytes 0–15 |
+| `+0x10` | 8 | Schedule bytes 16–23 |
+| `+0x18` | 2 | Signature `0x16`, `0x88`; the record is used only if both match |
+| `+0x1A` | 6 | Unused |
+
+At startup the master loads `0x0080`, then each relay with a valid record uses that record instead.
+
 ### Poll reply
 
 The poll reply is 20 bytes, with length byte `0x14`: temperature, relay and IO state, ADC, humidity and DS18B20 readings, followed by three `0xaa` bytes.
