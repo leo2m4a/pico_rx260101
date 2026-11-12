@@ -29,7 +29,7 @@ val_9 = *(inbuf+9);
       Ary_receiveTime.sec = *(inbuf+5);
       Ary_receiveTime.min = *(inbuf+6);
       Ary_receiveTime.hour = *(inbuf+7);
-      gPARAM_actflag |= 0x04;
+      actflag_set(0x04);
       ret=0;
     }
     else if(subcmd == SC_PING)
@@ -70,7 +70,7 @@ val_9 = *(inbuf+9);
         diff = slv_rf_action_wr_rly( *(inbuf+6), *(inbuf+7));
         //need update relay
         if(diff == 1)
-        {gPARAM_actflag |= 0x8;}
+        {actflag_set(0x8);}
       
         *(leng+0) = slv_compose_rf_write_a4_rsp(outbuf);
         
