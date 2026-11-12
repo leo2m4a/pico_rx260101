@@ -397,7 +397,14 @@ int main()
             
             // 清除標誌
             receivedFlag = false;
-            state = radio->readData(&gPARAM_RFRX_buf[0], 12);
+            // [fix] 依實際收到的長度讀取（原本固定 12 bytes，較長的下行封包會被截掉）。
+            //   - getPacketLength()：取得剛收到的封包長度（SX126x GetRxBufferStatus）
+            //   - readData(buf, len)：實際讀 min(len, 封包長度)；len = 0 會整包讀完，
+            //     但 LoRa 最長 255 bytes，所以要先限制在 buffer 大小內，避免寫爆。
+            size_t rx_len = radio->getPacketLength();
+            if (rx_len > sizeof(gPARAM_RFRX_buf)) { rx_len = sizeof(gPARAM_RFRX_buf); }
+            memset(&gPARAM_RFRX_buf[0], 0, sizeof(gPARAM_RFRX_buf));   // 清掉上一包較長封包的殘留
+            state = radio->readData(&gPARAM_RFRX_buf[0], rx_len);
             //lcd_set_cursor(1,8);
             //     lcd_hex(gPARAM_RFRX_buf[0]);
              //    lcd_hex(gPARAM_RFRX_buf[1]);
