@@ -130,18 +130,18 @@ bool repeating_timer_callback(__unused struct repeating_timer *t) {
       {
         gPARAM_HOUR = Ary_currentTime.hour;
         gPARAM_MIN10 = sub_min_div10(Ary_currentTime.min);
-        gPARAM_actflag |= 0x80;//relay
+        actflag_set(0x80);//relay
       }
     Ary_currentTime.sec = gPARAM_fcnt_1s;
     
-      gPARAM_actflag |= 0x1;  
+      actflag_set(0x1);  
       if(gPARAM_fcnt_1s % 10 == 1)
       {
-        gPARAM_actflag |= 0x10;
+        actflag_set(0x10);
       }
       else if(gPARAM_fcnt_1s % 30 == 6)
       {
-        gPARAM_actflag |= 0x20;
+        actflag_set(0x20);
       }
     }  
     else
@@ -419,7 +419,7 @@ int main()
             lcd_hex(ret);
                  if(ret >0)
                  {
-                   gPARAM_actflag |= 0x40;
+                   actflag_set(0x40);
                  }
                  #if 0
                  if(gPARAM_RFRX_buf[0] == 0x55)
@@ -430,7 +430,7 @@ int main()
                  else if(gPARAM_RFRX_buf[0] == 0xa9) 
                     {
                         //send rsp
-                        gPARAM_actflag |= 0x40;
+                        actflag_set(0x40);
                     }      
                  #endif                     
                  
@@ -447,7 +447,7 @@ int main()
       
       if((gPARAM_actflag & 0x1) == 0x1)
       {
-        gPARAM_actflag &= 0xfffffffe;
+        actflag_clr(0x1);
         //toggle led
         if((gPARAM_fcnt_1s & 0x1) == 0x1){ gpio_put(LED_PIN, 1); }
         else {gpio_put(LED_PIN, 0);}
@@ -459,18 +459,22 @@ int main()
         
       }
       else if((gPARAM_actflag & 0x2) == 0x2)
-      {gPARAM_actflag &= ~0x02;}
+      {actflag_clr(0x02);}
       else if((gPARAM_actflag & 0x4) == 0x4)
       {
-        gPARAM_actflag &= ~0x04;
+        actflag_clr(0x04);
+        // [fix] gPARAM_fcnt_1s / Ary_currentTime 也會在 timer ISR 裡被更新，
+        //       主迴圈對時寫入時先關中斷，避免寫到一半被 ISR 進位蓋掉
+        uint32_t irq_s = save_and_disable_interrupts();
         gPARAM_fcnt_1s = Ary_receiveTime.sec;
         Ary_currentTime.sec = Ary_receiveTime.sec;
         Ary_currentTime.min = Ary_receiveTime.min;
         Ary_currentTime.hour = Ary_receiveTime.hour;
+        restore_interrupts(irq_s);
       }
       else if((gPARAM_actflag & 0x8) == 0x8)
       {
-        gPARAM_actflag &= ~0x08;
+        actflag_clr(0x08);
         //relay or io action
         if((gVAR_RLY & 0x1) == 0x1)
         {gpio_put(GPIO_K0_PIN, 1);}
@@ -479,7 +483,7 @@ int main()
       }
       else if((gPARAM_actflag & 0x20) == 0x20)
       {
-        gPARAM_actflag &= ~0x20;
+        actflag_clr(0x20);
         //measure sht40
         // Measure temperature and humidity
         sht_error = sht4x_measure_blocking_read_raw(&temp_raw, &humi_raw);
@@ -530,7 +534,7 @@ int main()
       }
       else if((gPARAM_actflag & 0x40) == 0x40)
       {
-        gPARAM_actflag &= ~0x40;
+        actflag_clr(0x40);
         //compose rsp
         #if 0
         rsp_data.hdr = 0x9a;
@@ -562,7 +566,7 @@ int main()
       }
       else if((gPARAM_actflag & 0x80) == 0x80)      
       {
-        gPARAM_actflag &= ~0x80;
+        actflag_clr(0x80);
         
         u8temp1 = gSCH_RLY[gPARAM_HOUR]>>gPARAM_MIN10;
         #if 1

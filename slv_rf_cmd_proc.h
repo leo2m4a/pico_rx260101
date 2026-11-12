@@ -12,7 +12,7 @@ extern uint8_t gVAR_IO;
 extern uint8_t gVAR_ADC0;
 
 
-extern uint32_t gPARAM_actflag;
+extern volatile uint32_t gPARAM_actflag;
 extern uint32_t gPARAM_fcnt_1s;
 
 extern SensorData Ary_sensor;

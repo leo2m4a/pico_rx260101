@@ -1,7 +1,7 @@
 //parameter
 uint32_t gPARAM_fcnt_100ms;
 uint32_t gPARAM_fcnt_1s;
-uint32_t gPARAM_actflag;
+volatile uint32_t gPARAM_actflag;   // [fix] volatile：ISR 與主迴圈共用
 
 uint32_t gVAR_btn_u=0;
 uint32_t gVAR_btn_d=0;

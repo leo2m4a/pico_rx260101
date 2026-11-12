@@ -1,3 +1,31 @@
+#ifndef GLOBAL_DEF_ISR_SAFE_H
+#define GLOBAL_DEF_ISR_SAFE_H
+#include <stdint.h>
+#include "hardware/sync.h"
+
+// [fix] ISR 與主迴圈共用變數的保護
+// gPARAM_actflag 會被 timer ISR 設旗標、被主迴圈清旗標。
+// `x |= m` / `x &= ~m` 是「讀 → 改 → 寫」三步，主迴圈做到一半被 ISR 打斷，
+// ISR 剛設的旗標就會被主迴圈寫回的舊值蓋掉（掉旗標）。
+// RP2040 的 Cortex-M0+ 沒有 LDREX/STREX，所以用「短暫關中斷」保證原子性。
+// 一律用下面兩個函式改旗標（ISR 內呼叫也安全）。
+extern volatile uint32_t gPARAM_actflag;
+
+static inline void actflag_set(uint32_t m)
+{
+  uint32_t s = save_and_disable_interrupts();
+  gPARAM_actflag |= m;
+  restore_interrupts(s);
+}
+
+static inline void actflag_clr(uint32_t m)
+{
+  uint32_t s = save_and_disable_interrupts();
+  gPARAM_actflag &= ~m;
+  restore_interrupts(s);
+}
+#endif
+
 // SPI Defines
 // We are going to use SPI 0, and allocate it to the following GPIO pins
 // Pins can be changed, see the GPIO function select table in the datasheet for information on GPIO assignments
