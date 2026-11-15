@@ -359,7 +359,9 @@ int main()
     // Timer example code - This example fires off the callback after 2000ms
     //add_alarm_in_ms(2000, alarm_callback, NULL, false);
     
-    add_repeating_timer_ms(100, repeating_timer_callback, NULL, &timer);
+    // [timer] 負數 = 每 100 ms 固定觸發（對齊絕對時間，晚了下一拍會補回）。
+    //         正數是「上一次 callback 結束後再等 100 ms」，每一拍的延遲都會累積，時鐘會越走越慢。
+    add_repeating_timer_ms(-100, repeating_timer_callback, NULL, &timer);
     // For more examples of timer use see https://github.com/raspberrypi/pico-examples/tree/master/timer
 
     // Set up our UART

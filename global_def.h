@@ -27,7 +27,7 @@ static inline void actflag_clr(uint32_t m)
 #endif
 
 // 韌體版號：開機時顯示在 LCD，用來確認新程式真的燒進去了。每次改完程式請加一號。
-#define FW_VERSION "s002"
+#define FW_VERSION "s003"
 
 // SPI Defines
 // We are going to use SPI 0, and allocate it to the following GPIO pins
