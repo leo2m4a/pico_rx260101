@@ -326,7 +326,8 @@ int main()
     module = new Module(hal, RADIO_CS_PIN, RADIO_DIO1_PIN, RADIO_RST_PIN,RADIO_BUSY_PIN);
     // Create a new instance of the SX1262 radio
     radio = new SX1262(module);
-    state = radio->begin(915.0,125.0,7,5,0x12,20);
+    // 922.5 MHz：台灣 LoRa 免執照頻段 920–925 MHz 的中間。master / slave 必須相同。
+    state = radio->begin(922.5,125.0,7,5,0x12,20);
     if (state != RADIOLIB_ERR_NONE) {
         //printf("Failed to initialize radio, code %d\n", state);
         while (true);
