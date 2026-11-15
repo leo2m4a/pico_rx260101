@@ -13,7 +13,7 @@ This project is designed for the **宅老大 Pico LoRa** development board, whic
 
 ## Features
 
-- LoRa RF communication via SX1262 (915 MHz, SF7, BW 125 kHz)
+- LoRa RF communication via SX1262 (922.5 MHz, SF7, BW 125 kHz)
 - Temperature reading via DS18B20 (OneWire)
 - Temperature & humidity reading via SHT40 (I2C)
 - ADC voltage measurement (GPIO26, with resistor divider)
