@@ -69,10 +69,21 @@ receivedFlag = true;
     }
 }
 //
+// 讀 DS18B20。回傳值（高位元組, 低位元組）：
+//   實際溫度 : 16 位元有號數，單位 1/16 °C（例如 0x01BD = 27.8 °C）
+//   0xDEAD   : 匯流排上沒有感測器（自動偵測，見下）
+//   0xAA55   : 有感測器，但轉換逾時
 void sub_poll_ds(unsigned char *dsh,unsigned char *dsl)
 {
-  
-    ow_reset (&ow);
+    // [auto-detect] 1-Wire 的 reset 之後，有裝置在線上就會回一個 presence 脈衝（把線拉低）。
+    //   ow_reset() 回傳 false = 沒有任何裝置回應 → 這塊板子沒接 DS18B20，直接回報 0xDEAD，
+    //   不做轉換也不等待。每次量測都會重新偵測，所以感測器之後接上或拔掉都會反映出來。
+    if(!ow_reset (&ow))
+    {
+        *(dsh+0) = 0xde;
+        *(dsl+0) = 0xad;
+        return;
+    }
     ow_send (&ow, OW_SKIP_ROM);
     ow_send (&ow, DS18B20_CONVERT_T);
     int tmro=0;
@@ -272,6 +283,9 @@ int main()
     
    
     ow_init(&ow,pio,offset,gpio_ds);
+    // [auto-detect] 開啟內部弱上拉：沒接感測器時讓資料線穩定在高電位，偵測才不會誤判。
+    //   這只是輔助，接了 DS18B20 仍然需要外接約 4.7 kΩ 的上拉電阻。
+    gpio_pull_up(gpio_ds);
     
     sub_poll_ds(&ds_temp_h,&ds_temp_l);
 //    ow_reset (&ow);
@@ -393,7 +407,8 @@ int main()
     lcd_set_cursor(0,8);
     lcd_string(FW_VERSION);   // 版號定義在 global_def.h
     lcd_hex(PARAM_SID);
-    lcd_set_cursor(1,6);
+    // DS18B20 顯示位置：第 2 行第 2–5 格（原本在第 6–9 格，後兩格會被「送出回應的秒數」蓋掉）
+    lcd_set_cursor(1,2);
     lcd_hex(ds_temp_h);
     lcd_hex(ds_temp_l);
     
@@ -535,6 +550,10 @@ int main()
           sub_poll_ds(&ds_temp_h,&ds_temp_l);
           Ary_sensor.ds0_h = ds_temp_h;
           Ary_sensor.ds0_l = ds_temp_l;
+          // 每次量測完（每 30 秒）就更新 LCD，畫面上永遠是最新一次的讀值
+          lcd_set_cursor(1,2);
+          lcd_hex(ds_temp_h);
+          lcd_hex(ds_temp_l);
         #else
           Ary_sensor.ds0_h = 0xde;
           Ary_sensor.ds0_l = 0xad;
