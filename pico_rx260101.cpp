@@ -389,7 +389,7 @@ int main()
     
     lcd_init();
     lcd_set_cursor(0,8);
-    lcd_string("s001");
+    lcd_string(FW_VERSION);   // 版號定義在 global_def.h
     lcd_hex(PARAM_SID);
     lcd_set_cursor(1,6);
     lcd_hex(ds_temp_h);
@@ -454,9 +454,10 @@ int main()
         else {gpio_put(LED_PIN, 0);}
         //
         lcd_set_cursor(0,0);
-        lcd_hex((uint8_t)(Ary_currentTime.hour&0xff));
-        lcd_hex((uint8_t)(Ary_currentTime.min&0xff));
-        lcd_hex((uint8_t)(gPARAM_fcnt_1s&0xff));
+        // 時、分、秒改用十進位顯示（與 master 相同）
+        lcd_hex2dec((uint8_t)(Ary_currentTime.hour&0xff));
+        lcd_hex2dec((uint8_t)(Ary_currentTime.min&0xff));
+        lcd_hex2dec((uint8_t)(gPARAM_fcnt_1s&0xff));
         
       }
       else if((gPARAM_actflag & 0x2) == 0x2)
@@ -566,7 +567,7 @@ int main()
               printf("failed, code %d\n", state);
           }          
    lcd_set_cursor(1,8);
-        lcd_hex((uint8_t)(gPARAM_fcnt_1s&0xff));
+        lcd_hex2dec((uint8_t)(gPARAM_fcnt_1s&0xff));
         
       }
       else if((gPARAM_actflag & 0x80) == 0x80)      
@@ -576,8 +577,8 @@ int main()
         u8temp1 = gSCH_RLY[gPARAM_HOUR]>>gPARAM_MIN10;
         #if 1
          lcd_set_cursor(1,10);
-            lcd_hex((uint8_t)((gPARAM_HOUR)&0xff));
-            lcd_hex((uint8_t)((gPARAM_MIN10)&0xff));
+            lcd_hex2dec((uint8_t)((gPARAM_HOUR)&0xff));
+            lcd_hex2dec((uint8_t)((gPARAM_MIN10)&0xff));
             lcd_hex((uint8_t)((u8temp1)&0xff));
             #endif
         if((u8temp1 & 0x1) == 0x1)

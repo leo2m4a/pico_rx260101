@@ -34,10 +34,10 @@ const int LCD_BACKLIGHT = 0x08;
 
 const int LCD_ENABLE_BIT = 0x04;
 
-// By default these LCD display drivers are on bus address 0x27
-//static int gPARAM_lcd_i2caddr = 0x27;
+// LCD 位址在 lcd_init() 開機自動偵測（0x27 / 0x3f），下面的值只是兩個都沒回應時的預設值
+static int gPARAM_lcd_i2caddr = 0x27;
 //8574a4
-static int gPARAM_lcd_i2caddr = 0x3f;
+//static int gPARAM_lcd_i2caddr = 0x3f;
 
 // Modes for lcd_send_byte
 #define LCD_CHARACTER  1
@@ -54,5 +54,7 @@ void lcd_set_cursor(int line, int position);
 static inline void lcd_char(char val);
 void lcd_string(const char *s);
 void lcd_hex(uint8_t bchar);
+void lcd_hex2dec(uint8_t hex);
+void conv_hex2dec_max100(uint8_t hex,uint8_t *dig10,uint8_t *dig1);
 void lcd_init(void);
 #endif
