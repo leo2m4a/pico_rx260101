@@ -27,7 +27,7 @@ static inline void actflag_clr(uint32_t m)
 #endif
 
 // 韌體版號：開機時顯示在 LCD，用來確認新程式真的燒進去了。每次改完程式請加一號。
-#define FW_VERSION "s005"
+#define FW_VERSION "s008"
 
 // SPI Defines
 // We are going to use SPI 0, and allocate it to the following GPIO pins
@@ -70,7 +70,7 @@ static inline void actflag_clr(uint32_t m)
 #define VOLTAGE_R1 1.5  // 下電阻 (連接 GND)
 #define VOLTAGE_R2 1.0  // 上電阻 (連接外部電壓)
 //------
-#define PARAM_SID 0x86
+#define PARAM_SID 0x84
 // 電壓校正係數 (根據實際測量調整)
 // 計算方法: 校正係數 = 實際電壓 / 顯示電壓
 // 例如: 實際 3.5V 顯示為 3.37V，則 校正係數 = 3.5 / 3.37 = 1.0386

@@ -56,14 +56,22 @@ val_9 = *(inbuf+9);
       //write action
       if(addr == 0)
       {
+        // 排程開關：byte 6 = VAL_SCH_EN(0x1e) 啟用 / VAL_SCH_DIS(0xf1) 停用，
+        //           byte 8、9 = 密碼（VAL_PWD0、VAL_PWD1），密碼不對就不變更。
+        //   啟用：relay 依排程（gSCH_RLY）每秒更新，手動命令（addr 4）會在 1 秒內被排程蓋掉。
+        //   停用：relay 只聽手動命令（addr 4），維持最後的狀態。
         if((val_6 == VAL_SCH_EN)&& (val_8 == VAL_PWD0) && (val_9 == VAL_PWD1))
         {
-          //gCTRL_SCH_EN
+          gCTRL_SCH_EN = 1;
         }
         else if((val_6 == VAL_SCH_DIS)&& (val_8 == VAL_PWD0) && (val_9 == VAL_PWD1))
         {
-          //gCTRL_SCH_EN
+          gCTRL_SCH_EN = 0;
         }
+        // 不論有沒有變更都回報「目前的狀態」，host 可以用來確認（密碼錯的話狀態不會變）
+        *(leng+0) = slv_compose_rf_write_a0_rsp(outbuf);
+        ret |= 0x1;
+        actflag_set(0x100);   // [cfg] 主迴圈會把設定存進 flash
       }
       else if(addr == 4)
       {
@@ -88,6 +96,7 @@ val_9 = *(inbuf+9);
 
         *(leng+0) = slv_compose_rf_write_sch_rsp(outbuf,addr,&gSCH_RLY[0]);
         ret |= 0x1;
+        actflag_set(0x100);   // [cfg] 主迴圈會把設定存進 flash
       }
       else if (addr == 0x11)
       {
@@ -98,6 +107,7 @@ val_9 = *(inbuf+9);
 
         *(leng+0) = slv_compose_rf_write_sch_rsp(outbuf,addr,&gSCH_RLY[8]);
         ret |= 0x1;
+        actflag_set(0x100);   // [cfg] 主迴圈會把設定存進 flash
       }
       else if (addr == 0x12)
       {
@@ -108,6 +118,7 @@ val_9 = *(inbuf+9);
 
         *(leng+0) = slv_compose_rf_write_sch_rsp(outbuf,addr,&gSCH_RLY[16]);
         ret |= 0x1;
+        actflag_set(0x100);   // [cfg] 主迴圈會把設定存進 flash
       }
 
     }
@@ -186,6 +197,25 @@ uint8_t slv_compose_rf_write_a4_rsp(uint8_t *rspbuf)
   *(rspbuf+15) = 0xaa;
 //  for(i=11;i<16;i++)
 //  {*(rspbuf+i) = 0;}
+
+  return ret;
+}
+
+// 排程開關回應 (addr 0)：byte 6 = 目前狀態，VAL_SCH_EN(0x1e) = 啟用、VAL_SCH_DIS(0xf1) = 停用
+uint8_t slv_compose_rf_write_a0_rsp(uint8_t *rspbuf)
+{
+  int i;
+  uint8_t ret=0x10;
+
+  *(rspbuf+0) = RSP_SLVWR;
+  *(rspbuf+1) = ret;
+  *(rspbuf+2) = 0;
+  *(rspbuf+3) = PARAM_SID;
+  *(rspbuf+4) = SC_WRITE;
+  *(rspbuf+5) = 0;
+  *(rspbuf+6) = (gCTRL_SCH_EN != 0) ? VAL_SCH_EN : VAL_SCH_DIS;
+  for(i=7;i<ret;i++)
+  {*(rspbuf+i) = 0;}
 
   return ret;
 }

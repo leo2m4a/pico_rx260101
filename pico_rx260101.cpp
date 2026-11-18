@@ -11,9 +11,17 @@
 #include "usr_lib/sht40/sht4x.h"
 #include "usr_lib/sht40/sensirion_i2c_hal.h"
 
+// [auto-detect] SHT40 是否在線上。開機偵測一次；不在線上時，每次量測前會再試一次，
+//               所以感測器之後才接上也會被抓到。
+static bool gSHT_present = false;
+// SHT40 沒接時回報的原始值：0xFFFF 換算是 130 °C / 119 %RH，超出 SHT40 的量測範圍，
+// host 看到就知道不是真的讀值。
+#define SHT_RAW_ABSENT 0xff
+
 #include "global_def.h"
 #include "main.h"
 #include "slv_rf_cmd_proc.h"
+#include "cfg_flash.h"
 
 #include "onewire_library/onewire_library.h"    // onewire library functions
 #include "ow_rom.h"             // onewire ROM command codes
@@ -359,16 +367,16 @@ int main()
     // For more examples of I2C use see https://github.com/raspberrypi/pico-examples/tree/master/i2c
     sensirion_i2c_hal_init();
     // Initialize the SHT40 sensor
-    if (sht4x_init(SHT4X_I2C_ADDR_44) != 0) {
-        printf("SHT40 sensor initialization failed\n");
-        while (1);
-    }
-
-    // Probe the sensor to see if it's connected
-    if (sht4x_probe() != 0) {
+    // [auto-detect] 原本初始化或偵測失敗就停在 while(1)，SHT40 沒接整塊板子開不了機。
+    //               現在只記下「不在線上」，其他功能（LCD、RF、DS18B20、relay）照常運作。
+    gSHT_present = (sht4x_init(SHT4X_I2C_ADDR_44) == 0) && (sht4x_probe() == 0);
+    if (!gSHT_present) {
         printf("SHT40 sensor not found\n");
-        while (1);
-    }    
+        Ary_sensor.temp_h = SHT_RAW_ABSENT;
+        Ary_sensor.temp_l = SHT_RAW_ABSENT;
+        Ary_sensor.humi_h = SHT_RAW_ABSENT;
+        Ary_sensor.humi_l = SHT_RAW_ABSENT;
+    }
 
     // Timer example code - This example fires off the callback after 2000ms
     //add_alarm_in_ms(2000, alarm_callback, NULL, false);
@@ -407,6 +415,21 @@ int main()
     lcd_set_cursor(0,8);
     lcd_string(FW_VERSION);   // 版號定義在 global_def.h
     lcd_hex(PARAM_SID);
+    // [cfg] 從 flash 讀回上次存的排程與排程開關（param_init() 設的預設值在這裡被覆蓋）。
+    //       第 0 行第 14 格顯示來源：P = 正式區、R = 由暫存區復原、D = 沒資料用預設值。
+    {
+      cfg_data_t cfg;
+      int cfg_st = cfg_flash_boot(&cfg);
+      if(cfg_st >= 0)
+      {
+        int ci;
+        gCTRL_SCH_EN = (cfg.sch_en != 0) ? 1 : 0;
+        for(ci=0;ci<CFG_SCH_RLY_SIZE;ci++)
+        {gSCH_RLY[ci] = cfg.sch_rly[ci];}
+      }
+      lcd_set_cursor(0,14);
+      lcd_string((cfg_st == 0) ? "P" : ((cfg_st == 1) ? "R" : "D"));
+    }
     // DS18B20 顯示位置：第 2 行第 2–5 格（原本在第 6–9 格，後兩格會被「送出回應的秒數」蓋掉）
     lcd_set_cursor(1,2);
     lcd_hex(ds_temp_h);
@@ -509,6 +532,16 @@ int main()
         actflag_clr(0x20);
         //measure sht40
         // Measure temperature and humidity
+        // [auto-detect] 不在線上時先再偵測一次，還是沒有就跳過量測、回報 0xFFFF
+        if (!gSHT_present) {
+            gSHT_present = (sht4x_probe() == 0);
+        }
+        if (!gSHT_present) {
+            Ary_sensor.temp_h = SHT_RAW_ABSENT;
+            Ary_sensor.temp_l = SHT_RAW_ABSENT;
+            Ary_sensor.humi_h = SHT_RAW_ABSENT;
+            Ary_sensor.humi_l = SHT_RAW_ABSENT;
+        } else {
         sht_error = sht4x_measure_blocking_read_raw(&temp_raw, &humi_raw);
         if (sht_error == 0) {
             // Successfully read data
@@ -527,6 +560,8 @@ int main()
             // Error reading data
             lcd_set_cursor(1,8);
             lcd_string("Err");
+            gSHT_present = false;   // 讀取失敗（例如被拔掉）：下次量測前重新偵測
+        }
         }
         #ifdef _EN_ADC
         // 讀取 ADC0 電壓
@@ -602,10 +637,32 @@ int main()
             lcd_hex2dec((uint8_t)((gPARAM_MIN10)&0xff));
             lcd_hex((uint8_t)((u8temp1)&0xff));
             #endif
-        if((u8temp1 & 0x1) == 0x1)
-          {gpio_put(GPIO_K0_PIN, 1);}
-        else
-          {gpio_put(GPIO_K0_PIN, 0);}
+        // 排程啟用時才由排程控制 relay；停用時 relay 只聽手動命令（flag 0x8 那一段）。
+        if(gCTRL_SCH_EN != 0)
+        {
+          if((u8temp1 & 0x1) == 0x1)
+            {gpio_put(GPIO_K0_PIN, 1); gVAR_RLY |= 0x1;}
+          else
+            {gpio_put(GPIO_K0_PIN, 0); gVAR_RLY &= ~0x1;}
+          // gVAR_RLY 同步成實際輸出：poll 回應裡的 relay 狀態才會是真的，
+          // 之後停用排程時 relay 也會停在當下的狀態，不會突然跳動。
+        }
+      }
+      else if((gPARAM_actflag & 0x100) == 0x100)
+      {
+        actflag_clr(0x100);
+        // [cfg] 排程或排程開關被改過 → 存進 flash。
+        //       放在主迴圈（不在命令處理裡）是因為寫入要關中斷數十 ms，
+        //       先讓 RF 回應送出去，再做這件事。
+        {
+          cfg_data_t cfg;
+          int ci;
+          cfg.sch_en = gCTRL_SCH_EN;
+          for(ci=0;ci<CFG_SCH_RLY_SIZE;ci++)
+          {cfg.sch_rly[ci] = gSCH_RLY[ci];}
+          lcd_set_cursor(0,14);
+          lcd_string((cfg_flash_save(&cfg) == 0) ? "S" : "F");   // S = 存好、F = 失敗
+        }
       }
       //  printf("Hello, world!\n");
         sleep_ms(1);

@@ -50,6 +50,7 @@ RadioLib/src/hal/RPiPico/PicoHal.cpp
     usr_lib/sht40/sensirion_common.c
     usr_lib/sht40/sensirion_i2c_hal_pico.c
     slv_rf_cmd_proc.cpp
+    cfg_flash.c
     )
 
 pico_set_program_name(pico_rx260101 "pico_rx260101")
@@ -87,6 +88,8 @@ target_link_libraries(pico_rx260101
         hardware_pwm
         pico_multicore        
         hardware_pio
+        hardware_flash
+        hardware_sync
         onewire_library
         )
 

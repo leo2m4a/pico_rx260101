@@ -10,7 +10,7 @@ uint8_t gVAR_RLY = 0;
 uint8_t gVAR_IO = 0;
 uint8_t gVAR_ADC0 = 0;
 
-uint8_t gCTRL_SCH_EN = 0;
+uint8_t gCTRL_SCH_EN = 1;   // 排程開關：1 = 啟用（開機預設，與原本行為相同）、0 = 停用。由 host 經 0x78 addr 0 切換
 
 //volatile bool timer_fired = false;
 uint8_t gPARAM_UR1RX_buf[32];
